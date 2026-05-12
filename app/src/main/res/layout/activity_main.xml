@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D1117">
+
+    <!-- Cuarzito background -->
+    <ImageView
+        android:id="@+id/ivBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/cuarzito_green"
+        android:scaleType="fitCenter"
+        android:alpha="0.18" />
+
+    <!-- PANTALLA 1: Formulario -->
+    <LinearLayout
+        android:id="@+id/screenForm"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingHorizontal="40dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ACCESO SEGURO"
+            android:textColor="#00FF55"
+            android:textSize="22sp"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.15"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Establece tu contraseña de acceso"
+            android:textColor="#5F6B78"
+            android:textSize="13sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="32dp" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:hint="Contraseña"
+            android:inputType="textPassword"
+            android:textColor="#E0E0E0"
+            android:textColorHint="#3A4450"
+            android:background="@drawable/field_bg"
+            android:paddingHorizontal="16dp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etConfirm"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:hint="Repite la contraseña"
+            android:inputType="textPassword"
+            android:textColor="#E0E0E0"
+            android:textColorHint="#3A4450"
+            android:background="@drawable/field_bg"
+            android:paddingHorizontal="16dp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="32dp" />
+
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="GUARDAR CONTRASEÑA"
+            android:textColor="#0D1117"
+            android:backgroundTint="#00FF55"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.08" />
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#FF4444"
+            android:textSize="12sp"
+            android:fontFamily="monospace"
+            android:layout_marginTop="12dp"
+            android:visibility="invisible" />
+
+    </LinearLayout>
+
+    <!-- PANTALLA 2: Esperando veredicto -->
+    <LinearLayout
+        android:id="@+id/screenWaiting"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/ivWaiting"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            android:src="@drawable/cuarzito_green"
+            android:scaleType="fitCenter"
+            android:layout_marginBottom="32dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VERIFICANDO SEGURIDAD..."
+            android:textColor="#00FF55"
+            android:textSize="16sp"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.1" />
+
+    </LinearLayout>
+
+    <!-- PANTALLA 3: Resultado -->
+    <LinearLayout
+        android:id="@+id/screenResult"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingHorizontal="40dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/ivResult"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:src="@drawable/cuarzito_green"
+            android:scaleType="fitCenter"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:id="@+id/tvResultTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="20sp"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tvResultPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#FF4444"
+            android:textSize="26sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="40dp" />
+
+        <Button
+            android:id="@+id/btnNext"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="CONTINUAR"
+            android:textColor="#0D1117"
+            android:backgroundTint="#00FF55"
+            android:fontFamily="monospace" />
+
+    </LinearLayout>
+
+</FrameLayout>
