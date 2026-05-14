@@ -2,28 +2,32 @@ package com.cuarzopolar.password
 
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
-import org.json.JSONObject
-import java.util.concurrent.TimeUnit
+import androidx.lifecycle.lifecycleScope
+import com.cuarzopolar.password.network.ConnectionState
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var screenForm:    LinearLayout
-    private lateinit var screenWaiting: LinearLayout
-    private lateinit var screenResult:  LinearLayout
+    private lateinit var ivCuarzito:    ImageView
+    private lateinit var formPanel:     LinearLayout
+    private lateinit var resultOverlay: FrameLayout
     private lateinit var etPassword:    EditText
     private lateinit var etConfirm:     EditText
     private lateinit var btnSend:       Button
@@ -31,22 +35,36 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvError:       TextView
     private lateinit var tvResultTitle: TextView
     private lateinit var tvResultPass:  TextView
-    private lateinit var ivWaiting:     ImageView
-    private lateinit var ivResult:      ImageView
 
-    private var webSocket: WebSocket? = null
+    private var service: PasswordService? = null
+    private var serviceBound = false
     private var pulseAnimator: ObjectAnimator? = null
-    private val client = OkHttpClient.Builder()
-        .pingInterval(10, TimeUnit.SECONDS)
-        .build()
+    private var baseScale = 1f
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+            val svc = (binder as PasswordService.LocalBinder).getService()
+            service = svc
+            serviceBound = true
+            svc.onVerdictReceived = { cracked, password ->
+                runOnUiThread { showResult(cracked, password) }
+            }
+            observeConnectionState()
+        }
+        override fun onServiceDisconnected(name: ComponentName?) {
+            service?.onVerdictReceived = null
+            serviceBound = false
+            service = null
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        screenForm    = findViewById(R.id.screenForm)
-        screenWaiting = findViewById(R.id.screenWaiting)
-        screenResult  = findViewById(R.id.screenResult)
+        ivCuarzito    = findViewById(R.id.ivCuarzito)
+        formPanel     = findViewById(R.id.formPanel)
+        resultOverlay = findViewById(R.id.resultOverlay)
         etPassword    = findViewById(R.id.etPassword)
         etConfirm     = findViewById(R.id.etConfirm)
         btnSend       = findViewById(R.id.btnSend)
@@ -54,54 +72,83 @@ class MainActivity : AppCompatActivity() {
         tvError       = findViewById(R.id.tvError)
         tvResultTitle = findViewById(R.id.tvResultTitle)
         tvResultPass  = findViewById(R.id.tvResultPassword)
-        ivWaiting     = findViewById(R.id.ivWaiting)
-        ivResult      = findViewById(R.id.ivResult)
 
         btnSend.setOnClickListener { onSend() }
         btnNext.setOnClickListener { showForm() }
 
-        connect()
+        ivCuarzito.post { applyFillScale(ivCuarzito, 0.85f) }
+
+        val svcIntent = Intent(this, PasswordService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(svcIntent)
+        } else {
+            startService(svcIntent)
+        }
+        bindService(svcIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
     }
 
-    // ── Navegación entre pantallas ────────────────────────────
+    private fun observeConnectionState() {
+        val svc = service ?: return
+        lifecycleScope.launch {
+            svc.connectionState.collectLatest { state ->
+                when (state) {
+                    ConnectionState.DISCONNECTED -> {
+                        ivCuarzito.setImageResource(R.drawable.cuarzito_blue)
+                        formPanel.visibility     = View.GONE
+                        resultOverlay.visibility = View.GONE
+                    }
+                    ConnectionState.CONNECTING -> {
+                        ivCuarzito.setImageResource(R.drawable.cuarzito_amber)
+                        formPanel.visibility     = View.GONE
+                        resultOverlay.visibility = View.GONE
+                    }
+                    ConnectionState.CONNECTED -> {
+                        ivCuarzito.setImageResource(R.drawable.cuarzito_green)
+                        showForm()
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Navegación entre estados ────────────────────────────────
 
     private fun showForm() {
         etPassword.text.clear()
         etConfirm.text.clear()
-        tvError.visibility = View.INVISIBLE
-        screenResult.visibility  = View.GONE
-        screenWaiting.visibility = View.GONE
-        screenForm.visibility    = View.VISIBLE
+        tvError.visibility       = View.GONE
+        resultOverlay.visibility = View.GONE
+        formPanel.visibility     = View.VISIBLE
     }
 
     private fun showWaiting() {
-        screenForm.visibility    = View.GONE
-        screenResult.visibility  = View.GONE
-        screenWaiting.visibility = View.VISIBLE
-        startPulse(ivWaiting)
+        formPanel.visibility     = View.GONE
+        resultOverlay.visibility = View.GONE
+        ivCuarzito.setImageResource(R.drawable.cuarzito_red)
     }
 
     private fun showResult(cracked: Boolean, password: String) {
-        pulseAnimator?.cancel()
-        screenForm.visibility    = View.GONE
-        screenWaiting.visibility = View.GONE
-        screenResult.visibility  = View.VISIBLE
+        formPanel.visibility     = View.GONE
+        resultOverlay.visibility = View.VISIBLE
 
+        ivCuarzito.setImageResource(R.drawable.cuarzito_green)
         if (cracked) {
             tvResultTitle.text      = "CONTRASEÑA DETECTADA"
             tvResultTitle.setTextColor(0xFFFF4444.toInt())
             tvResultPass.text       = password
             tvResultPass.visibility = View.VISIBLE
-            ivResult.setImageResource(R.drawable.cuarzito_red)
         } else {
             tvResultTitle.text      = "CONTRASEÑA SEGURA ✓"
             tvResultTitle.setTextColor(0xFF00FF55.toInt())
             tvResultPass.visibility = View.GONE
-            ivResult.setImageResource(R.drawable.cuarzito_green)
         }
     }
 
-    // ── Lógica de envío ───────────────────────────────────────
+    // ── Lógica de envío ─────────────────────────────────────────
 
     private fun onSend() {
         val pass    = etPassword.text.toString()
@@ -114,16 +161,12 @@ class MainActivity : AppCompatActivity() {
             showError("Las contraseñas no coinciden"); return
         }
 
-        val ws = webSocket
-        if (ws == null) {
+        val svc = service
+        if (svc == null || svc.connectionState.value != ConnectionState.CONNECTED) {
             showError("Sin conexión con el sistema"); return
         }
 
-        ws.send(JSONObject().apply {
-            put("type",     "password")
-            put("value",    pass)
-        }.toString())
-
+        svc.sendPassword(pass)
         showWaiting()
     }
 
@@ -132,46 +175,36 @@ class MainActivity : AppCompatActivity() {
         tvError.visibility = View.VISIBLE
     }
 
-    // ── WebSocket ─────────────────────────────────────────────
+    // ── Escala y animación ───────────────────────────────────────
 
-    private fun connect() {
-        val request = Request.Builder().url("ws://localhost:8767").build()
-        webSocket = client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(ws: WebSocket, response: Response) {
-                // conexión lista, no hace falta notificar al usuario
-            }
-            override fun onMessage(ws: WebSocket, text: String) {
-                try {
-                    val obj = JSONObject(text)
-                    if (obj.optString("type") == "verdict") {
-                        val cracked  = obj.optBoolean("cracked", false)
-                        val password = obj.optString("password", "")
-                        runOnUiThread { showResult(cracked, password) }
-                    }
-                } catch (_: Exception) {}
-            }
-            override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                // reconectar tras 3 s
-                android.os.Handler(mainLooper).postDelayed({ connect() }, 3000)
-            }
-            override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                webSocket = null
-            }
-        })
+    private fun applyFillScale(iv: ImageView, targetHeightFraction: Float) {
+        val vw = iv.width.toFloat()
+        val vh = iv.height.toFloat()
+        val d  = iv.drawable ?: return
+        val imgW = d.intrinsicWidth.toFloat()
+        val imgH = d.intrinsicHeight.toFloat()
+        if (imgW <= 0f || imgH <= 0f) return
+        val fitScale  = minOf(vw / imgW, vh / imgH)
+        val renderedH = imgH * fitScale
+        val scale     = (vh * targetHeightFraction) / renderedH
+        baseScale     = scale
+        iv.scaleX     = scale
+        iv.scaleY     = scale
+        iv.translationX = vw * 0.08f
+        startPulseAnimation()
     }
 
-    // ── Animación pulso ───────────────────────────────────────
-
-    private fun startPulse(view: View) {
+    private fun startPulseAnimation() {
+        pulseAnimator?.cancel()
         pulseAnimator = ObjectAnimator.ofPropertyValuesHolder(
-            view,
-            PropertyValuesHolder.ofFloat("scaleX", 1f, 1.08f),
-            PropertyValuesHolder.ofFloat("scaleY", 1f, 1.08f)
+            ivCuarzito,
+            PropertyValuesHolder.ofFloat("scaleX", baseScale, baseScale * 1.06f),
+            PropertyValuesHolder.ofFloat("scaleY", baseScale, baseScale * 1.06f)
         ).apply {
-            duration      = 900
-            repeatCount   = ObjectAnimator.INFINITE
-            repeatMode    = ObjectAnimator.REVERSE
-            interpolator  = AccelerateDecelerateInterpolator()
+            duration     = 3000
+            repeatCount  = ObjectAnimator.INFINITE
+            repeatMode   = ObjectAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
             start()
         }
     }
@@ -179,7 +212,10 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         pulseAnimator?.cancel()
-        webSocket?.close(1000, null)
-        client.dispatcher.executorService.shutdown()
+        if (isFinishing) service?.onVerdictReceived = null
+        if (serviceBound) {
+            unbindService(serviceConnection)
+            serviceBound = false
+        }
     }
 }
