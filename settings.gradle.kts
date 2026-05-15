@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Password"
+rootProject.name = "under_attack_password_android"
 include(":app")

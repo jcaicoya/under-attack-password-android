@@ -1,7 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 }
+
+val localProperties = Properties().apply {
+    val localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use { load(it) }
+    }
+}
+
+val releaseKeystorePath = localProperties.getProperty("underAttack.keystore.path")
+val releaseKeystoreAlias = localProperties.getProperty("underAttack.keystore.alias")
+val releaseKeystorePassword = localProperties.getProperty("underAttack.keystore.password")
+val releaseKeyPassword = localProperties.getProperty("underAttack.key.password")
 
 android {
     namespace = "com.cuarzopolar.password"
@@ -19,9 +33,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (!releaseKeystorePath.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeystoreAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (!releaseKeystorePath.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

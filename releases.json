@@ -1,0 +1,11 @@
+{
+  "releases": [
+    {
+      "version": 0,
+      "commit": "cbd7ef1",
+      "date": "2026-05-15T18:57:39",
+      "message": "Add WebSocketManager, PasswordService, UDP discovery; fix icon and cuarzito state colors",
+      "apk": "under_attack_password_android-v00.apk"
+    }
+  ]
+}

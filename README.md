@@ -2,7 +2,7 @@
 
 Android app for the `password` cybershow module. Runs on the show phone and acts as the fake "secure app" where the hook creates passwords during the live performance.
 
-Communicates with the `password-qt` Qt desktop app over WebSocket on port `8767`, tunnelled via ADB reverse so the Android always connects to `localhost` regardless of network.
+Communicates with the `password_qt` Qt desktop app over WebSocket on port `8767`, tunnelled via ADB reverse so the Android always connects to `localhost` regardless of network.
 
 ## Show flow
 
@@ -27,7 +27,7 @@ Communicates with the `password-qt` Qt desktop app over WebSocket on port `8767`
 2. Ensure `local.properties` exists with the correct `sdk.dir`.
 3. Sync Gradle and run on the show device.
 
-The app connects automatically to `localhost:8767` on launch. The ADB reverse tunnel (`adb reverse tcp:8767 tcp:8767`) is set up by `password-qt` on startup, or manually via `adb-bridge`.
+The app connects automatically to `localhost:8767` on launch. The ADB reverse tunnel (`adb reverse tcp:8767 tcp:8767`) is set up by `password_qt` on startup, or manually via `adb-bridge`.
 
 ## Protocol
 
