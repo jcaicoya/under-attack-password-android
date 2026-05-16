@@ -6,6 +6,13 @@
       "date": "2026-05-15T18:57:39",
       "message": "Add WebSocketManager, PasswordService, UDP discovery; fix icon and cuarzito state colors",
       "apk": "under_attack_password_android-v00.apk"
+    },
+    {
+      "version": 1,
+      "commit": "21b4b43",
+      "date": "2026-05-16T10:50:33",
+      "message": "Rename package-release.ps1 to package_release.ps1 (snake_case)",
+      "apk": "under_attack_password_android-v01.apk"
     }
   ]
 }
