@@ -20,6 +20,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.cuarzopolar.password.network.ConnectionState
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -75,6 +76,7 @@ class MainActivity : AppCompatActivity() {
 
         btnSend.setOnClickListener { onSend() }
         btnNext.setOnClickListener { showForm() }
+        ivCuarzito.setOnClickListener { onCuarzitoTapped() }
 
         ivCuarzito.post { applyFillScale(ivCuarzito, 0.85f) }
 
@@ -168,6 +170,32 @@ class MainActivity : AppCompatActivity() {
 
         svc.sendPassword(pass)
         showWaiting()
+    }
+
+    private fun onCuarzitoTapped() {
+        val svc = service ?: return
+        if (svc.connectionState.value == ConnectionState.CONNECTED) return
+        showConnectBottomSheet()
+    }
+
+    private fun showConnectBottomSheet() {
+        val sheet = BottomSheetDialog(this)
+        val sheetView = layoutInflater.inflate(R.layout.bottom_sheet_connect, null)
+        sheet.setContentView(sheetView)
+
+        val etIp = sheetView.findViewById<EditText>(R.id.etIp)
+        val prefs = getSharedPreferences("password_prefs", Context.MODE_PRIVATE)
+        etIp.setText(prefs.getString("last_ip", ""))
+
+        sheetView.findViewById<View>(R.id.btnConnect).setOnClickListener {
+            val ip = etIp.text.toString().trim()
+            if (ip.isNotEmpty()) {
+                service?.connect(ip)
+                sheet.dismiss()
+            }
+        }
+
+        sheet.show()
     }
 
     private fun showError(msg: String) {

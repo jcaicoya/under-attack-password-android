@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Password</string>
+    <string name="hint_ip">IP del portátil</string>
+    <string name="btn_connect">Conectar</string>
 </resources>

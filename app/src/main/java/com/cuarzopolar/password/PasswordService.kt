@@ -100,6 +100,12 @@ class PasswordService : LifecycleService() {
         super.onTaskRemoved(rootIntent)
     }
 
+    fun connect(ip: String) {
+        getSharedPreferences("password_prefs", Context.MODE_PRIVATE)
+            .edit().putString("last_ip", ip).apply()
+        wsManager.connect(ip)
+    }
+
     fun sendPassword(password: String) {
         wsManager.sendText("""{"type":"password","value":"$password"}""")
     }
