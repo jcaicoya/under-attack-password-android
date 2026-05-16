@@ -20,6 +20,13 @@
       "date": "2026-05-16T17:26:44",
       "message": "Align password Android connection flow",
       "apk": "under_attack_password_android-v02.apk"
+    },
+    {
+      "version": 3,
+      "commit": "8f1f56d",
+      "date": "2026-05-16T18:38:50",
+      "message": "Make password Android immersive",
+      "apk": "under_attack_password_android-v03.apk"
     }
   ]
 }
