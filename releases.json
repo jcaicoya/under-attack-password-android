@@ -27,6 +27,13 @@
       "date": "2026-05-16T18:38:50",
       "message": "Make password Android immersive",
       "apk": "under_attack_password_android-v03.apk"
+    },
+    {
+      "version": 4,
+      "commit": "dd60dfa",
+      "date": "2026-05-17T11:59:47",
+      "message": "Standardize project docs",
+      "apk": "under_attack_password_android-v04.apk"
     }
   ]
 }
